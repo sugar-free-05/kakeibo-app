@@ -116,10 +116,13 @@ function handleEditClick(entry) { /* ... 変更なし ... */ }
 </template>
 
 <style scoped>
-/* スタイルは変更なし、no-data-messageのスタイルだけ追加 */
-.no-data-message {
-  text-align: center;
-  padding: 2rem;
-  color: var(--c-text-2);
+/* ... */
+.summary-content { display: flex; align-items: center; gap: 2rem; }
+.total-amount-container { flex-grow: 1; }
+/* ★★★ グラフのサイズを大きくする ★★★ */
+.chart-container { 
+  width: 220px; /* 180pxから220pxに変更 */
+  height: 220px; /* 180pxから220pxに変更 */
 }
+/* ... */
 </style>
