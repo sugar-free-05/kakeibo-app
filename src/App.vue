@@ -1,43 +1,48 @@
 <script setup>
 import { ref } from 'vue';
-import FileUploadForm from './components/FileUploadForm.vue';
-import ManualEntryForm from './components/ManualEntryForm.vue';
-import EntryList from './components/EntryList.vue';
-import FixedCostForm from './components/FixedCostForm.vue';
+import Auth from './components/Auth.vue';
+import KakeiboApp from './components/KakeiboApp.vue';
+import { createClient } from '@supabase/supabase-js';
 
-const entryToEdit = ref(null);
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-function handleEditRequest(entry) {
-  entryToEdit.value = entry;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-function handleCancelEdit() {
-  entryToEdit.value = null;
-}
+const session = ref(null);
+onMounted(() => {
+  supabase.auth.getSession().then(({ data }) => {
+    session.value = data.session;
+  });
+  supabase.auth.onAuthStateChange((_event, _session) => {
+    session.value = _session;
+  });
+});
 </script>
 
 <template>
-  <main>
-    <h1>Flowee</h1>
-    <div class="form-container">
-      <FileUploadForm />
-      <ManualEntryForm 
-        :entry-to-edit="entryToEdit"
-        @cancel-edit="handleCancelEdit" 
-      />
-    </div>
-    <div class="fixed-cost-container">
-      <FixedCostForm />
-    </div>
-    <!-- ★★★ :key="entryToEdit" のような形で、キーを渡す（このままでOK） ★★★ -->
-    <!-- このファイルは編集機能のために既にキーがありますが、そのまま使います -->
-    <EntryList @edit-entry="handleEditRequest" />
-  </main>
+  <div>
+    <KakeiboApp v-if="session" :session="session" :supabase="supabase" />
+    <Auth v-else :supabase="supabase" />
+  </div>
 </template>
 
 <style>
-/* スタイルは変更なし */
-</style>
-<style scoped>
-/* スタイルは変更なし */
+/* アプリ全体の基本設定 */
+:root {
+  --c-brand: #2a9d8f;
+  --c-text-1: #2c3e50;
+  --c-text-2: #475569;
+  --c-bg: #f9fafb; /* 背景を少しグレーに */
+  --c-border: #e5e7eb;
+  --c-danger: #ef4444;
+  --c-edit: #3b82f6;
+}
+body {
+  margin: 0;
+  background-color: var(--c-bg);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  color: var(--c-text-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 </style>

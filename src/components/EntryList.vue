@@ -116,13 +116,14 @@ function handleEditClick(entry) { /* ... 変更なし ... */ }
 </template>
 
 <style scoped>
-/* ... */
-.summary-content { display: flex; align-items: center; gap: 2rem; }
-.total-amount-container { flex-grow: 1; }
-/* ★★★ グラフのサイズを大きくする ★★★ */
-.chart-container { 
-  width: 220px; /* 180pxから220pxに変更 */
-  height: 220px; /* 180pxから220pxに変更 */
+.list-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 1px solid var(--c-border);
 }
+h2 { margin-top: 0; }
+.summary-box { padding: 0; background: none; }
+.chart-container { width: 200px; height: 200px; }
 /* ... */
 </style>

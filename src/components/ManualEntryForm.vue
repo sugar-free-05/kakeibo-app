@@ -140,65 +140,17 @@ async function handleSubmit() {
 
 <style scoped>
 .form-section {
-  padding: 1.5rem;
-  border: 1px solid var(--c-border);
+  background: white;
+  padding: 2rem;
   border-radius: 12px;
-  width: 450px;
-}
-h2 {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  color: var(--c-text-1);
-}
-.form-group {
-  margin-bottom: 1.25rem;
-}
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--c-text-2);
-}
-input, select {
-  width: 100%;
-  padding: 0.75rem;
   border: 1px solid var(--c-border);
-  border-radius: 8px;
-  box-sizing: border-box; /* paddingを含めて幅を計算 */
-  font-size: 1rem;
+  height: 100%;
 }
-.button-group {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-.button-group button {
-  flex-grow: 1;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  color: white;
-  background-color: var(--c-brand);
-  transition: background-color 0.2s;
-}
-.button-group button:hover {
-  background-color: #248a7d;
-}
-.button-group button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-.cancel-btn {
-  background-color: var(--c-text-2);
-}
-.cancel-btn:hover {
-  background-color: #3a4657;
-}
-.status-box { margin-top: 1rem; padding: 0.75rem; border-radius: 8px; }
-.status-box.error { background-color: #fef2f2; color: #991b1b; }
-.status-box:not(.error) { background-color: var(--c-brand-light); color: var(--c-brand); }
+h2 { margin-top: 0; }
+.form-group { margin-bottom: 1rem; }
+label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+input, select { width: 100%; padding: 0.75rem; border: 1px solid var(--c-border); border-radius: 8px; box-sizing: border-box; }
+.button-group { display: flex; gap: 1rem; margin-top: 1.5rem; }
+.button-group button { flex-grow: 1; padding: 0.75rem; border-radius: 8px; }
+/* ... */
 </style>
