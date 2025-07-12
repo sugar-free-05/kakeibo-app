@@ -102,15 +102,12 @@ async function handleRegisterFixedCosts() {
 </template>
 
 <style scoped>
-/* <style>部分も変更ありません */
-.form-section { border: 1px solid #eee; padding: 20px; border-radius: 8px; }
-.form-group { margin-bottom: 15px; }
-label { display: block; margin-bottom: 5px; font-weight: bold; }
-input { width: 95%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-button { width: 100%; padding: 10px; background-color: #f0ad4e; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
-button:hover { background-color: #ec971f; }
-button:disabled { background-color: #aaa; cursor: not-allowed; }
-.status-box { margin-top: 15px; padding: 10px; border-radius: 4px; font-weight: bold; }
-.status-box.error { background-color: #f8d7da; color: #721c24; }
-.status-box:not(.error) { background-color: #d4edda; color: #155724; }
+/* ... */
+button { 
+  background-color: var(--secondary-color); /* 変数に変更 */
+}
+button:hover { 
+  background-color: var(--secondary-hover-color); /* 変数に変更 */
+}
+/* ... */
 </style>

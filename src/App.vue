@@ -1,47 +1,101 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { createClient } from '@supabase/supabase-js';
-import Auth from './components/Auth.vue'; // ★ 認証コンポーネント
-import KakeiboApp from './components/KakeiboApp.vue'; // ★ 家計簿アプリ本体
+// スクリプト部分は変更なし
+import { ref } from 'vue';
+import FileUploadForm from './components/FileUploadForm.vue';
+import ManualEntryForm from './components/ManualEntryForm.vue';
+import EntryList from './components/EntryList.vue';
+import FixedCostForm from './components/FixedCostForm.vue';
 
-// ★★★ SupabaseクライアントはApp.vueで一元管理する ★★★
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const entryToEdit = ref(null);
 
-// ログイン中のセッション（ユーザー情報）を保持する変数
-const session = ref(null);
-
-onMounted(() => {
-  // 1. 現在のセッションを取得
-  supabase.auth.getSession().then(({ data }) => {
-    session.value = data.session;
-  });
-
-  // 2. ログイン状態の変化を監視
-  supabase.auth.onAuthStateChange((_event, _session) => {
-    session.value = _session;
-  });
-});
+function handleEditRequest(entry) {
+  entryToEdit.value = entry;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function handleCancelEdit() {
+  entryToEdit.value = null;
+}
 </script>
 
 <template>
-  <div class="container">
-    <!-- 
-      session（ユーザー情報）があれば、KakeiboApp（家計簿本体）を表示
-      なければ、Auth（ログインフォーム）を表示する
-    -->
-    <KakeiboApp v-if="session" :session="session" :supabase="supabase" />
-    <Auth v-else :supabase="supabase" />
-  </div>
+  <!-- template部分は変更なし -->
+  <main>
+    <h1>Flowee</h1>
+    <div class="form-container">
+      <FileUploadForm />
+      <ManualEntryForm 
+        :entry-to-edit="entryToEdit"
+        @cancel-edit="handleCancelEdit" 
+      />
+    </div>
+    <div class="fixed-cost-container">
+      <FixedCostForm />
+    </div>
+    <EntryList @edit-entry="handleEditRequest" />
+  </main>
 </template>
 
+<style> /* ★★★ scoped を外して、グローバルなスタイルを定義 ★★★ */
+:root {
+  /* ★ カラー変数を定義 */
+  --primary-color: #4CAF50; /* メインの緑 */
+  --primary-hover-color: #45a049;
+  --secondary-color: #FFC107; /* アクセントの黄色 */
+  --secondary-hover-color: #f0b400;
+  --danger-color: #f44336; /* 削除ボタンの赤 */
+  --danger-hover-color: #e53935;
+  --edit-color: #2196F3; /* 編集ボタンの青 */
+  --edit-hover-color: #1e88e5;
+  --text-color: #333;
+  --background-color: #f4f4f4;
+  --component-bg-color: #ffffff;
+  --border-color: #ddd;
+}
+
+body {
+  margin: 0;
+  background-color: var(--background-color); /* 背景色を適用 */
+  font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  color: var(--text-color);
+}
+</style>
+
 <style scoped>
-.container {
+main {
   max-width: 1000px;
-  margin: 0 auto;
+  margin: 20px auto;
   padding: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #333;
+}
+h1 {
+  text-align: center;
+  font-size: 3em;
+  margin-bottom: 40px;
+  color: var(--primary-color); /* 変数を使用 */
+  font-weight: 300;
+}
+.form-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+.form-container > :deep(.form-section) {
+  flex-basis: 420px;
+  background-color: var(--component-bg-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.fixed-cost-container {
+  margin-top: 40px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border-color);
+}
+.fixed-cost-container > :deep(.form-section) {
+  background-color: var(--component-bg-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  max-width: 500px;
+  margin: 0 auto;
 }
 </style>

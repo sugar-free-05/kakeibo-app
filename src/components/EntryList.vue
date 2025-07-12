@@ -120,5 +120,19 @@ function handleEditClick(entry) { /* ... 変更なし ... */ }
 </template>
 
 <style scoped>
-/* スタイル部分は変更なし */
+/* ... */
+.summary-box span { color: var(--primary-color); } /* 変数に変更 */
+.edit-btn { 
+  background-color: var(--edit-color); /* 変数に変更 */
+}
+.edit-btn:hover { 
+  background-color: var(--edit-hover-color); /* 変数に変更 */
+}
+.delete-btn { 
+  background-color: var(--danger-color); /* 変数に変更 */
+}
+.delete-btn:hover { 
+  background-color: var(--danger-hover-color); /* 変数に変更 */
+}
+/* ... */
 </style>

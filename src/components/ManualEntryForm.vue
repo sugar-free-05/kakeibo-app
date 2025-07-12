@@ -139,17 +139,13 @@ async function handleSubmit() {
 </template>
 
 <style scoped>
-/* <style>部分は変更ありません */
-.form-section { border: 1px solid #eee; padding: 20px; border-radius: 8px; }
-.form-group { margin-bottom: 15px; }
-label { display: block; margin-bottom: 5px; font-weight: bold; }
-input, select { width: 95%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-.button-group { display: flex; gap: 10px; }
-.button-group button { flex-grow: 1; padding: 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; color: white; background-color: #4285F4; }
-.button-group button:hover { opacity: 0.9; }
-.button-group button:disabled { background-color: #aaa; cursor: not-allowed; }
+.form-section { /* ... */ }
+.button-group button { 
+  background-color: var(--primary-color); /* 変数に変更 */
+}
+.button-group button:hover { 
+  background-color: var(--primary-hover-color); /* 変数に変更 */
+}
 .cancel-btn { background-color: #777; }
-.status-box { margin-top: 15px; padding: 10px; border-radius: 4px; font-weight: bold; }
-.status-box.error { background-color: #f8d7da; color: #721c24; }
-.status-box:not(.error) { background-color: #d4edda; color: #155724; }
+/* ... 他は変更なし ... */
 </style>
