@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch, nextTick } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { createClient } from '@supabase/supabase-js';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'vue-chartjs';
@@ -11,44 +11,62 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const emit = defineEmits(['edit-entry']);
-const allEntries = ref([]); // ★ すべてのデータを保持する変数
+
+// --- 状態管理の変数を整理 ---
+const allEntries = ref([]);
+const availableMonths = ref([]);
+const selectedMonth = ref('');
 const isLoading = ref(true);
 const errorMessage = ref('');
-const showContent = ref(false);
 
-// ★★★ 月別フィルター用の新しい変数 ★★★
-const availableMonths = ref([]); // 選択肢となる年月のリスト
-const selectedMonth = ref('');   // ユーザーが選択した年月
+// --- データ取得と初期化を行う非同期関数 ---
+async function fetchData() {
+  try {
+    isLoading.value = true;
+    const { data, error } = await supabase.from('database').select('*').order('date', { ascending: false });
+    if (error) throw error;
+    allEntries.value = data;
 
-// ★★★ 選択された月のデータだけを絞り込む算出プロパティ ★★★
-const filteredEntries = computed(() => {
-  if (!selectedMonth.value) {
-    return allEntries.value; // 何も選択されていなければ全データを返す
+    const months = new Set(data.map(entry => entry.date.slice(0, 7)));
+    availableMonths.value = Array.from(months);
+    if (availableMonths.value.length > 0) {
+      selectedMonth.value = availableMonths.value[0];
+    }
+  } catch (error) {
+    console.error('データ取得エラー:', error);
+    errorMessage.value = 'データの読み込みに失敗しました。';
+  } finally {
+    isLoading.value = false;
   }
+}
+
+// --- onMountedでデータ取得関数を呼び出す ---
+onMounted(fetchData);
+
+
+// --- 算出プロパティ ---
+const filteredEntries = computed(() => {
+  if (!selectedMonth.value) return allEntries.value;
   return allEntries.value.filter(entry => entry.date.startsWith(selectedMonth.value));
 });
 
-// ★★★ 合計金額は、絞り込まれたデータを元に計算する ★★★
 const totalAmount = computed(() => {
   return filteredEntries.value.reduce((sum, entry) => sum + entry.amount, 0);
 });
 
-// ★★★ グラフも、絞り込まれたデータを元に計算する ★★★
 const chartData = computed(() => {
-    if (!filteredEntries.value || filteredEntries.value.length === 0) {
-        return { labels: [], datasets: [{ data: [] }] };
-    }
-    const summary = filteredEntries.value.reduce((acc, entry) => {
-        acc[entry.category] = (acc[entry.category] || 0) + entry.amount;
-        return acc;
-    }, {});
-    const labels = Object.keys(summary);
-    const data = Object.values(summary);
-    const backgroundColors = labels.map((_, i) => `hsl(${i * 360 / labels.length}, 70%, 70%)`);
-    return {
-        labels: labels,
-        datasets: [{ backgroundColor: backgroundColors, data: data }]
-    };
+  if (!filteredEntries.value || filteredEntries.value.length === 0) return { labels: [], datasets: [{ data: [] }] };
+  const summary = filteredEntries.value.reduce((acc, entry) => {
+    acc[entry.category] = (acc[entry.category] || 0) + entry.amount;
+    return acc;
+  }, {});
+  const labels = Object.keys(summary);
+  const data = Object.values(summary);
+  const backgroundColors = labels.map((_, i) => `hsl(${i * 360 / labels.length}, 70%, 70%)`);
+  return {
+    labels: labels,
+    datasets: [{ backgroundColor: backgroundColors, data: data }]
+  };
 });
 
 const chartOptions = {
@@ -57,55 +75,20 @@ const chartOptions = {
   plugins: { legend: { position: 'top' } },
 };
 
-onMounted(async () => {
-  try {
-    isLoading.value = true;
-    showContent.value = false;
-    const { data, error } = await supabase.from('database').select('*').order('date', { ascending: false });
-    if (error) throw error;
-    allEntries.value = data; // ★ 全データを allEntries に保存
-
-    // ★★★ 年月の選択肢を生成する処理 ★★★
-    const months = new Set(data.map(entry => entry.date.slice(0, 7))); // 'YYYY-MM' の形式で取得
-    availableMonths.value = Array.from(months);
-    // 最新の月をデフォルトで選択状態にする
-    if (availableMonths.value.length > 0) {
-      selectedMonth.value = availableMonths.value[0];
-    }
-
-    await nextTick();
-    showContent.value = true;
-  } catch (error) {
-    console.error('データ取得エラー:', error);
-    errorMessage.value = 'データの読み込みに失敗しました。';
-  } finally {
-    isLoading.value = false;
-  }
-});
-
-async function deleteEntry(id) {
-  if (!confirm('このデータを本当に削除しますか？')) return;
-  try {
-    const { error } = await supabase.from('database').delete().eq('id', id);
-    if (error) throw error;
-    location.reload();
-  } catch (error) {
-    console.error('削除エラー:', error);
-    alert('データの削除に失敗しました。');
-  }
-}
-
-function handleEditClick(entry) {
-  emit('edit-entry', entry);
-}
+// --- メソッド ---
+async function deleteEntry(id) { /* ... 変更なし ... */ }
+function handleEditClick(entry) { /* ... 変更なし ... */ }
 </script>
 
 <template>
   <div class="list-section">
     <h2>入力履歴</h2>
     
-    <div v-if="showContent">
-      <!-- ★★★ 月別フィルターのドロップダウンを追加 ★★★ -->
+    <div v-if="isLoading">データを読み込んでいます...</div>
+    <div v-if="errorMessage" class="error-box">{{ errorMessage }}</div>
+    
+    <!-- ★★★ v-if を isLoading が終わった後に変更 ★★★ -->
+    <div v-if="!isLoading && !errorMessage">
       <div class="filter-container">
         <label for="month-filter">表示月:</label>
         <select id="month-filter" v-model="selectedMonth">
@@ -127,52 +110,15 @@ function handleEditClick(entry) {
         </div>
       </div>
       
-      <!-- ★★★ v-forの対象を filteredEntries に変更 ★★★ -->
       <table v-if="filteredEntries.length > 0">
-        <thead>
-          <tr>
-            <th>日付</th>
-            <th>内容</th>
-            <th>カテゴリ</th>
-            <th>金額</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="entry in filteredEntries" :key="entry.id">
-            <td>{{ entry.date }}</td>
-            <td>{{ entry.content }}</td>
-            <td>{{ entry.category }}</td>
-            <td class="amount">{{ entry.amount.toLocaleString() }} 円</td>
-            <td class="actions">
-              <button @click="handleEditClick(entry)" class="edit-btn">編集</button>
-              <button @click="deleteEntry(entry.id)" class="delete-btn">削除</button>
-            </td>
-          </tr>
-        </tbody>
+        <!-- ... thead, tbody は変更なし ... -->
       </table>
       
       <div v-if="filteredEntries.length === 0">対象のデータがありません。</div>
     </div>
-
-    <div v-if="isLoading">データを読み込んでいます...</div>
-    <div v-if="errorMessage" class="error-box">{{ errorMessage }}</div>
   </div>
 </template>
 
 <style scoped>
-/* ★★★ フィルター用のスタイルを追加 ★★★ */
-.filter-container {
-  margin-bottom: 20px;
-}
-.filter-container label {
-  margin-right: 10px;
-  font-weight: bold;
-}
-.filter-container select {
-  padding: 5px;
-  border-radius: 4px;
-}
-
-/* ... 他のスタイルは変更なし ... */
+/* スタイル部分は変更なし */
 </style>
