@@ -120,19 +120,66 @@ function handleEditClick(entry) { /* ... 変更なし ... */ }
 </template>
 
 <style scoped>
-/* ... */
-.summary-box span { color: var(--primary-color); } /* 変数に変更 */
-.edit-btn { 
-  background-color: var(--edit-color); /* 変数に変更 */
+.list-section {
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--c-border);
 }
-.edit-btn:hover { 
-  background-color: var(--edit-hover-color); /* 変数に変更 */
+h2 {
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--c-text-2);
+  font-weight: 600;
 }
-.delete-btn { 
-  background-color: var(--danger-color); /* 変数に変更 */
+.filter-container {
+  margin-bottom: 1.5rem;
 }
-.delete-btn:hover { 
-  background-color: var(--danger-hover-color); /* 変数に変更 */
+.filter-container label {
+  margin-right: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-2);
 }
-/* ... */
+.filter-container select {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--c-border);
+  font-size: 0.9rem;
+}
+.summary-box {
+  background-color: #fafafa;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border-radius: 12px;
+}
+.summary-box h3 { margin: 0; font-size: 1.25rem; }
+.summary-box span { font-size: 1.75rem; color: var(--c-brand); font-weight: 600; }
+.summary-content { display: flex; align-items: center; gap: 2rem; }
+.total-amount-container { flex-grow: 1; }
+.chart-container { width: 180px; height: 180px; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  border-bottom: 1px solid var(--c-border);
+  padding: 1rem 0.5rem;
+  text-align: left;
+}
+th { font-size: 0.85rem; color: var(--c-text-2); font-weight: 600; }
+tbody tr:hover { background-color: #f8f9fa; }
+.amount { text-align: right; font-weight: 500; }
+.actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+.actions button {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+  font-size: 0.85rem;
+  transition: opacity 0.2s;
+}
+.actions button:hover { opacity: 0.85; }
+.edit-btn { background-color: var(--c-edit); }
+.delete-btn { background-color: var(--c-danger); }
 </style>

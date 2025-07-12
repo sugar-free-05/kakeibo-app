@@ -35,67 +35,53 @@ function handleCancelEdit() {
   </main>
 </template>
 
-<style> /* ★★★ scoped を外して、グローバルなスタイルを定義 ★★★ */
+<style>
+/* グローバルスタイル */
 :root {
-  /* ★ カラー変数を定義 */
-  --primary-color: #4CAF50; /* メインの緑 */
-  --primary-hover-color: #45a049;
-  --secondary-color: #FFC107; /* アクセントの黄色 */
-  --secondary-hover-color: #f0b400;
-  --danger-color: #f44336; /* 削除ボタンの赤 */
-  --danger-hover-color: #e53935;
-  --edit-color: #2196F3; /* 編集ボタンの青 */
-  --edit-hover-color: #1e88e5;
-  --text-color: #333;
-  --background-color: #f4f4f4;
-  --component-bg-color: #ffffff;
-  --border-color: #ddd;
+  /* ★ カラーテーマをシンプルに再定義 */
+  --c-brand: #2a9d8f; /* 落ち着いた緑 */
+  --c-brand-light: #e9f5f3;
+  --c-text-1: #2c3e50; /* メインのテキスト色 */
+  --c-text-2: #475569; /* 少し薄いテキスト色 */
+  --c-bg: #ffffff; /* 背景は白 */
+  --c-border: #e2e8f0;
+  --c-danger: #e53935;
+  --c-edit: #1e88e5;
 }
 
 body {
   margin: 0;
-  background-color: var(--background-color); /* 背景色を適用 */
-  font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-  color: var(--text-color);
+  background-color: var(--c-bg);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; /* ★ フォントを元に戻す */
+  color: var(--c-text-1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 </style>
 
 <style scoped>
 main {
-  max-width: 1000px;
-  margin: 20px auto;
-  padding: 20px;
+  max-width: 1200px; /* 全体の幅を広めに */
+  margin: 0 auto;
+  padding: 2rem 1.5rem; /* ★ 余白を多めに */
 }
 h1 {
   text-align: center;
-  font-size: 3em;
-  margin-bottom: 40px;
-  color: var(--primary-color); /* 変数を使用 */
-  font-weight: 300;
+  font-size: 3rem;
+  font-weight: 600; /* 少し太くして存在感を出す */
+  margin-bottom: 3rem;
+  color: var(--c-brand);
 }
 .form-container {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  gap: 40px;
+  gap: 2rem;
   flex-wrap: wrap;
-}
-.form-container > :deep(.form-section) {
-  flex-basis: 420px;
-  background-color: var(--component-bg-color);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 3rem;
 }
 .fixed-cost-container {
-  margin-top: 40px;
-  padding-top: 40px;
-  border-top: 1px solid var(--border-color);
-}
-.fixed-cost-container > :deep(.form-section) {
-  background-color: var(--component-bg-color);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  max-width: 500px;
-  margin: 0 auto;
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--c-border);
 }
 </style>

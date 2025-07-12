@@ -102,12 +102,53 @@ async function handleRegisterFixedCosts() {
 </template>
 
 <style scoped>
-/* ... */
-button { 
-  background-color: var(--secondary-color); /* 変数に変更 */
+.form-section {
+  padding: 1.5rem;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  max-width: 500px;
+  margin: 0 auto;
 }
-button:hover { 
-  background-color: var(--secondary-hover-color); /* 変数に変更 */
+h2, label {
+  color: var(--c-text-2);
+  font-weight: 600;
 }
-/* ... */
+h2 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.form-group {
+  margin-bottom: 1.25rem;
+}
+input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+button {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  background-color: var(--c-brand);
+  transition: background-color 0.2s;
+}
+button:hover {
+  background-color: #248a7d;
+}
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+.status-box { margin-top: 1rem; padding: 0.75rem; border-radius: 8px; }
+.status-box.error { background-color: #fef2f2; color: #991b1b; }
+.status-box:not(.error) { background-color: var(--c-brand-light); color: var(--c-brand); }
 </style>
