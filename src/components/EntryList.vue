@@ -6,44 +6,56 @@ import { Doughnut } from 'vue-chartjs';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-// ★★★ 環境変数からSupabaseの情報を読み込むように変更 ★★★
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const emit = defineEmits(['edit-entry']);
-const entries = ref([]);
+const allEntries = ref([]); // ★ すべてのデータを保持する変数
 const isLoading = ref(true);
 const errorMessage = ref('');
 const showContent = ref(false);
-const chartData = ref({ labels: [], datasets: [{ backgroundColor: [], data: [] }] });
+
+// ★★★ 月別フィルター用の新しい変数 ★★★
+const availableMonths = ref([]); // 選択肢となる年月のリスト
+const selectedMonth = ref('');   // ユーザーが選択した年月
+
+// ★★★ 選択された月のデータだけを絞り込む算出プロパティ ★★★
+const filteredEntries = computed(() => {
+  if (!selectedMonth.value) {
+    return allEntries.value; // 何も選択されていなければ全データを返す
+  }
+  return allEntries.value.filter(entry => entry.date.startsWith(selectedMonth.value));
+});
+
+// ★★★ 合計金額は、絞り込まれたデータを元に計算する ★★★
+const totalAmount = computed(() => {
+  return filteredEntries.value.reduce((sum, entry) => sum + entry.amount, 0);
+});
+
+// ★★★ グラフも、絞り込まれたデータを元に計算する ★★★
+const chartData = computed(() => {
+    if (!filteredEntries.value || filteredEntries.value.length === 0) {
+        return { labels: [], datasets: [{ data: [] }] };
+    }
+    const summary = filteredEntries.value.reduce((acc, entry) => {
+        acc[entry.category] = (acc[entry.category] || 0) + entry.amount;
+        return acc;
+    }, {});
+    const labels = Object.keys(summary);
+    const data = Object.values(summary);
+    const backgroundColors = labels.map((_, i) => `hsl(${i * 360 / labels.length}, 70%, 70%)`);
+    return {
+        labels: labels,
+        datasets: [{ backgroundColor: backgroundColors, data: data }]
+    };
+});
+
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { position: 'top' } },
 };
-
-const totalAmount = computed(() => {
-  return entries.value.reduce((sum, entry) => sum + entry.amount, 0);
-});
-
-watch(entries, (newEntries) => {
-  if (!newEntries || newEntries.length === 0) {
-    chartData.value = { labels: [], datasets: [{ data: [] }] };
-    return;
-  }
-  const summary = newEntries.reduce((acc, entry) => {
-    acc[entry.category] = (acc[entry.category] || 0) + entry.amount;
-    return acc;
-  }, {});
-  const labels = Object.keys(summary);
-  const data = Object.values(summary);
-  const backgroundColors = labels.map((_, i) => `hsl(${i * 360 / labels.length}, 70%, 70%)`);
-  chartData.value = {
-    labels: labels,
-    datasets: [{ backgroundColor: backgroundColors, data: data }]
-  };
-}, { deep: true });
 
 onMounted(async () => {
   try {
@@ -51,7 +63,16 @@ onMounted(async () => {
     showContent.value = false;
     const { data, error } = await supabase.from('database').select('*').order('date', { ascending: false });
     if (error) throw error;
-    entries.value = data;
+    allEntries.value = data; // ★ 全データを allEntries に保存
+
+    // ★★★ 年月の選択肢を生成する処理 ★★★
+    const months = new Set(data.map(entry => entry.date.slice(0, 7))); // 'YYYY-MM' の形式で取得
+    availableMonths.value = Array.from(months);
+    // 最新の月をデフォルトで選択状態にする
+    if (availableMonths.value.length > 0) {
+      selectedMonth.value = availableMonths.value[0];
+    }
+
     await nextTick();
     showContent.value = true;
   } catch (error) {
@@ -80,10 +101,21 @@ function handleEditClick(entry) {
 </script>
 
 <template>
-  <!-- <template>部分は変更ありません -->
   <div class="list-section">
     <h2>入力履歴</h2>
+    
     <div v-if="showContent">
+      <!-- ★★★ 月別フィルターのドロップダウンを追加 ★★★ -->
+      <div class="filter-container">
+        <label for="month-filter">表示月:</label>
+        <select id="month-filter" v-model="selectedMonth">
+          <option value="">すべての月</option>
+          <option v-for="month in availableMonths" :key="month" :value="month">
+            {{ month }}
+          </option>
+        </select>
+      </div>
+
       <div class="summary-box">
         <div class="summary-content">
           <div class="total-amount-container">
@@ -94,7 +126,9 @@ function handleEditClick(entry) {
           </div>
         </div>
       </div>
-      <table v-if="entries.length > 0">
+      
+      <!-- ★★★ v-forの対象を filteredEntries に変更 ★★★ -->
+      <table v-if="filteredEntries.length > 0">
         <thead>
           <tr>
             <th>日付</th>
@@ -105,7 +139,7 @@ function handleEditClick(entry) {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="entry in entries" :key="entry.id">
+          <tr v-for="entry in filteredEntries" :key="entry.id">
             <td>{{ entry.date }}</td>
             <td>{{ entry.content }}</td>
             <td>{{ entry.category }}</td>
@@ -117,31 +151,28 @@ function handleEditClick(entry) {
           </tr>
         </tbody>
       </table>
-      <div v-if="entries.length === 0">まだデータがありません。</div>
+      
+      <div v-if="filteredEntries.length === 0">対象のデータがありません。</div>
     </div>
+
     <div v-if="isLoading">データを読み込んでいます...</div>
     <div v-if="errorMessage" class="error-box">{{ errorMessage }}</div>
   </div>
 </template>
 
 <style scoped>
-/* <style>部分は変更ありません */
-.list-section { margin-top: 40px; }
-.error-box { color: red; font-weight: bold; }
-.summary-box { background-color: #f2f2f2; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
-.summary-box h3 { margin: 0; font-size: 1.2em; }
-.summary-box span { font-size: 1.5em; color: #42b883; margin-left: 10px; }
-.summary-content { display: flex; align-items: center; gap: 20px; }
-.total-amount-container { flex-grow: 1; }
-.chart-container { width: 200px; height: 200px; }
-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-th { background-color: #f2f2f2; }
-tr:nth-child(even) { background-color: #f9f9f9; }
-.amount { text-align: right; font-weight: bold; }
-.actions { display: flex; gap: 5px; }
-.edit-btn { background-color: #4285F4; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-.edit-btn:hover { background-color: #357ae8; }
-.delete-btn { background-color: #e53935; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-.delete-btn:hover { background-color: #c62828; }
+/* ★★★ フィルター用のスタイルを追加 ★★★ */
+.filter-container {
+  margin-bottom: 20px;
+}
+.filter-container label {
+  margin-right: 10px;
+  font-weight: bold;
+}
+.filter-container select {
+  padding: 5px;
+  border-radius: 4px;
+}
+
+/* ... 他のスタイルは変更なし ... */
 </style>
