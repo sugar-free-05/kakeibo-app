@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { createClient } from '@supabase/supabase-js';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'vue-chartjs';
@@ -11,22 +11,18 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const emit = defineEmits(['edit-entry']);
-
-// --- 状態管理の変数を整理 ---
 const allEntries = ref([]);
 const availableMonths = ref([]);
 const selectedMonth = ref('');
 const isLoading = ref(true);
 const errorMessage = ref('');
 
-// --- データ取得と初期化を行う非同期関数 ---
 async function fetchData() {
   try {
     isLoading.value = true;
     const { data, error } = await supabase.from('database').select('*').order('date', { ascending: false });
     if (error) throw error;
     allEntries.value = data;
-
     const months = new Set(data.map(entry => entry.date.slice(0, 7)));
     availableMonths.value = Array.from(months);
     if (availableMonths.value.length > 0) {
@@ -40,11 +36,8 @@ async function fetchData() {
   }
 }
 
-// --- onMountedでデータ取得関数を呼び出す ---
 onMounted(fetchData);
 
-
-// --- 算出プロパティ ---
 const filteredEntries = computed(() => {
   if (!selectedMonth.value) return allEntries.value;
   return allEntries.value.filter(entry => entry.date.startsWith(selectedMonth.value));
@@ -75,9 +68,21 @@ const chartOptions = {
   plugins: { legend: { position: 'top' } },
 };
 
-// --- メソッド ---
-async function deleteEntry(id) { /* ... 変更なし ... */ }
-function handleEditClick(entry) { /* ... 変更なし ... */ }
+async function deleteEntry(id) {
+  if (!confirm('このデータを本当に削除しますか？')) return;
+  try {
+    const { error } = await supabase.from('database').delete().eq('id', id);
+    if (error) throw error;
+    location.reload();
+  } catch (error) {
+    console.error('削除エラー:', error);
+    alert('データの削除に失敗しました。');
+  }
+}
+
+function handleEditClick(entry) {
+  emit('edit-entry', entry);
+}
 </script>
 
 <template>
@@ -110,8 +115,29 @@ function handleEditClick(entry) { /* ... 変更なし ... */ }
         </div>
       </div>
       
+      <!-- ★★★ v-if を filteredEntries.length に変更 ★★★ -->
       <table v-if="filteredEntries.length > 0">
-        <!-- ... thead, tbody は変更なし ... -->
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>内容</th>
+            <th>カテゴリ</th>
+            <th>金額</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="entry in filteredEntries" :key="entry.id">
+            <td>{{ entry.date }}</td>
+            <td>{{ entry.content }}</td>
+            <td>{{ entry.category }}</td>
+            <td class="amount">{{ entry.amount.toLocaleString() }} 円</td>
+            <td class="actions">
+              <button @click="handleEditClick(entry)" class="edit-btn">編集</button>
+              <button @click="deleteEntry(entry.id)" class="delete-btn">削除</button>
+            </td>
+          </tr>
+        </tbody>
       </table>
       
       <div v-if="filteredEntries.length === 0">対象のデータがありません。</div>
@@ -120,6 +146,7 @@ function handleEditClick(entry) { /* ... 変更なし ... */ }
 </template>
 
 <style scoped>
+/* スタイル部分は変更なし */
 .list-section {
   margin-top: 3rem;
   padding-top: 3rem;
@@ -182,4 +209,5 @@ tbody tr:hover { background-color: #f8f9fa; }
 .actions button:hover { opacity: 0.85; }
 .edit-btn { background-color: var(--c-edit); }
 .delete-btn { background-color: var(--c-danger); }
+.error-box { color: var(--c-danger); font-weight: 600; }
 </style>
