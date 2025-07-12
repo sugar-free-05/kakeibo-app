@@ -1,71 +1,47 @@
 <script setup>
-import { ref } from 'vue';
-import FileUploadForm from './components/FileUploadForm.vue';
-import ManualEntryForm from './components/ManualEntryForm.vue';
-import EntryList from './components/EntryList.vue';
-import FixedCostForm from './components/FixedCostForm.vue';
+import { ref, onMounted } from 'vue';
+import { createClient } from '@supabase/supabase-js';
+import Auth from './components/Auth.vue'; // ★ 認証コンポーネント
+import KakeiboApp from './components/KakeiboApp.vue'; // ★ 家計簿アプリ本体
 
-const entryToEdit = ref(null);
+// ★★★ SupabaseクライアントはApp.vueで一元管理する ★★★
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-function handleEditRequest(entry) {
-  entryToEdit.value = entry;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+// ログイン中のセッション（ユーザー情報）を保持する変数
+const session = ref(null);
 
-function handleCancelEdit() {
-  entryToEdit.value = null;
-}
+onMounted(() => {
+  // 1. 現在のセッションを取得
+  supabase.auth.getSession().then(({ data }) => {
+    session.value = data.session;
+  });
+
+  // 2. ログイン状態の変化を監視
+  supabase.auth.onAuthStateChange((_event, _session) => {
+    session.value = _session;
+  });
+});
 </script>
 
 <template>
-  <main>
-    <h1>Flowee</h1>
-    <div class="form-container">
-      <FileUploadForm />
-      <ManualEntryForm 
-        :entry-to-edit="entryToEdit"
-        @cancel-edit="handleCancelEdit" 
-      />
-    </div>
-    <div class="fixed-cost-container">
-      <FixedCostForm />
-    </div>
-    <EntryList @edit-entry="handleEditRequest" />
-  </main>
+  <div class="container">
+    <!-- 
+      session（ユーザー情報）があれば、KakeiboApp（家計簿本体）を表示
+      なければ、Auth（ログインフォーム）を表示する
+    -->
+    <KakeiboApp v-if="session" :session="session" :supabase="supabase" />
+    <Auth v-else :supabase="supabase" />
+  </div>
 </template>
 
 <style scoped>
-main {
-  max-width: 1000px; /* 全体の幅をさらに広げました */
+.container {
+  max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #333;
-}
-h1 {
-  text-align: center;
-  font-size: 2.5em;
-  margin-bottom: 30px;
-  color: #42b883;
-}
-
-/* ★★★ flexboxを使ったレイアウト指定 ★★★ */
-.form-container {
-  display: flex;
-  justify-content: center; /* 中央寄せに変更 */
-  align-items: flex-start;
-  gap: 40px; /* 隙間 */
-  flex-wrap: wrap; /* 画面が狭い時に折り返す */
-}
-
-/* ★★★ :deep()を使って子コンポーネントの幅を指定 ★★★ */
-.form-container > :deep(.form-section) {
-  flex-basis: 420px; /* 基本の幅を420pxに */
-}
-
-.fixed-cost-container {
-  margin-top: 40px;
-  padding-top: 40px;
-  border-top: 1px solid #eee;
 }
 </style>
