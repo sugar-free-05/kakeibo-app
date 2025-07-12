@@ -2,8 +2,9 @@
 import { ref } from 'vue';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://jequjznjvmdbbxtwbmhs.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcXVqem5qdm1kYmJ4dHdibWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIyNzIxOTEsImV4cCI6MjA2Nzg0ODE5MX0.uA4lOCIWUciDOswqcf-g7cdZ8PbTvwnTdmoaAOaW5NE';
+// ★★★ 環境変数からSupabaseの情報を読み込むように変更 ★★★
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const targetMonth = ref(new Date().toISOString().slice(0, 7));
@@ -16,36 +17,29 @@ async function handleRegisterFixedCosts() {
     alert('年月を入力してください。');
     return;
   }
-  
   if (!confirm(`${targetMonth.value} 分の固定費を登録します。よろしいですか？`)) {
     return;
   }
-
   isLoading.value = true;
   statusMessage.value = '処理を開始します...';
   isError.value = false;
 
   try {
-    // ★★★ 1. 日付の範囲を正しく指定して、登録済みチェックを行う ★★★
     statusMessage.value = '登録済みデータがないか確認中...';
-    
-    // 対象月の初日 (YYYY-MM-01)
     const startDate = `${targetMonth.value}-01`;
-    // 対象月の末日を計算
     const year = parseInt(targetMonth.value.split('-')[0]);
     const month = parseInt(targetMonth.value.split('-')[1]);
-    const lastDay = new Date(year, month, 0).getDate(); // 月の最終日を取得
+    const lastDay = new Date(year, month, 0).getDate();
     const endDate = `${targetMonth.value}-${lastDay}`;
 
     const { data: existingEntries, error: checkError } = await supabase
       .from('database')
       .select('id')
       .eq('input_method', '固定費自動登録')
-      .gte('date', startDate) // ★ gte: startDate 以降
-      .lte('date', endDate);   // ★ lte: endDate 以前
+      .gte('date', startDate)
+      .lte('date', endDate);
 
     if (checkError) throw checkError;
-
     if (existingEntries.length > 0) {
       isError.value = true;
       statusMessage.value = `${targetMonth.value} 分の固定費は既に追加されています。`;
@@ -53,12 +47,8 @@ async function handleRegisterFixedCosts() {
       return;
     }
 
-    // ★★★ 2. fixed_costsテーブルからリストを取得（ここは変更なし） ★★★
     statusMessage.value = '固定費リストを取得中...';
-    const { data: fixedCosts, error: fetchError } = await supabase
-      .from('fixed_costs')
-      .select('*');
-
+    const { data: fixedCosts, error: fetchError } = await supabase.from('fixed_costs').select('*');
     if (fetchError) throw fetchError;
     if (fixedCosts.length === 0) {
       statusMessage.value = '登録する固定費がありません。';
@@ -66,7 +56,6 @@ async function handleRegisterFixedCosts() {
       return;
     }
 
-    // ★★★ 3. データを挿入形式に変換（ここは変更なし） ★★★
     const newEntries = fixedCosts.map(cost => {
       const paymentDate = `${targetMonth.value}-${String(cost.payment_day).padStart(2, '0')}`;
       return {
@@ -78,12 +67,8 @@ async function handleRegisterFixedCosts() {
       };
     });
     
-    // ★★★ 4. データを一括で挿入（ここは変更なし） ★★★
     statusMessage.value = 'データベースに登録中...';
-    const { error: insertError } = await supabase
-      .from('database')
-      .insert(newEntries);
-
+    const { error: insertError } = await supabase.from('database').insert(newEntries);
     if (insertError) throw insertError;
 
     statusMessage.value = `${targetMonth.value} 分の固定費 (${newEntries.length}件) を登録しました！ページをリロードして確認してください。`;
@@ -91,7 +76,6 @@ async function handleRegisterFixedCosts() {
 
   } catch (error) {
     console.error('固定費登録エラー:', error);
-    // エラーオブジェクト全体を表示して、より詳細な情報を得る
     statusMessage.value = 'エラーが発生しました: ' + (error.message || JSON.stringify(error));
     isError.value = true;
   } finally {

@@ -8,8 +8,9 @@ const props = defineProps({
 const emit = defineEmits(['cancel-edit']);
 const editingId = ref(null);
 
-const supabaseUrl = 'https://jequjznjvmdbbxtwbmhs.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcXVqem5qdm1kYmJ4dHdibWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIyNzIxOTEsImV4cCI6MjA2Nzg0ODE5MX0.uA4lOCIWUciDOswqcf-g7cdZ8PbTvwnTdmoaAOaW5NE';
+// ★★★ 環境変数からSupabaseの情報を読み込むように変更 ★★★
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const entryDate = ref('');
@@ -107,7 +108,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <!-- style="..." を削除した、元のシンプルなdivです -->
+  <!-- <template>部分は変更ありません -->
   <div class="form-section">
     <h2>{{ editingId ? 'データを編集' : '手動で追加' }}</h2>
     <div class="form-group">
@@ -138,7 +139,7 @@ async function handleSubmit() {
 </template>
 
 <style scoped>
-/* スタイル部分は変更ありません */
+/* <style>部分は変更ありません */
 .form-section { border: 1px solid #eee; padding: 20px; border-radius: 8px; }
 .form-group { margin-bottom: 15px; }
 label { display: block; margin-bottom: 5px; font-weight: bold; }

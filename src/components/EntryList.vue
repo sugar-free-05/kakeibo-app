@@ -1,5 +1,4 @@
 <script setup>
-// ★ nextTick を追加インポートします
 import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { createClient } from '@supabase/supabase-js';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -7,18 +6,16 @@ import { Doughnut } from 'vue-chartjs';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const supabaseUrl = 'https://jequjznjvmdbbxtwbmhs.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplcXVqem5qdm1kYmJ4dHdibWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIyNzIxOTEsImV4cCI6MjA2Nzg0ODE5MX0.uA4lOCIWUciDOswqcf-g7cdZ8PbTvwnTdmoaAOaW5NE';
+// ★★★ 環境変数からSupabaseの情報を読み込むように変更 ★★★
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const emit = defineEmits(['edit-entry']);
 const entries = ref([]);
 const isLoading = ref(true);
 const errorMessage = ref('');
-
-// ★★★ グラフとリストの表示を制御する新しい変数 ★★★
 const showContent = ref(false);
-
 const chartData = ref({ labels: [], datasets: [{ backgroundColor: [], data: [] }] });
 const chartOptions = {
   responsive: true,
@@ -51,15 +48,12 @@ watch(entries, (newEntries) => {
 onMounted(async () => {
   try {
     isLoading.value = true;
-    showContent.value = false; // ★ 最初は非表示にしておく
+    showContent.value = false;
     const { data, error } = await supabase.from('database').select('*').order('date', { ascending: false });
     if (error) throw error;
     entries.value = data;
-
-    // ★★★ データを取得した後、少し待ってから表示する ★★★
-    await nextTick(); // DOMの更新を待つ
-    showContent.value = true; // 表示をONにする
-
+    await nextTick();
+    showContent.value = true;
   } catch (error) {
     console.error('データ取得エラー:', error);
     errorMessage.value = 'データの読み込みに失敗しました。';
@@ -68,15 +62,27 @@ onMounted(async () => {
   }
 });
 
-async function deleteEntry(id) { /* ... 変更なし ... */ }
-function handleEditClick(entry) { /* ... 変更なし ... */ }
+async function deleteEntry(id) {
+  if (!confirm('このデータを本当に削除しますか？')) return;
+  try {
+    const { error } = await supabase.from('database').delete().eq('id', id);
+    if (error) throw error;
+    location.reload();
+  } catch (error) {
+    console.error('削除エラー:', error);
+    alert('データの削除に失敗しました。');
+  }
+}
+
+function handleEditClick(entry) {
+  emit('edit-entry', entry);
+}
 </script>
 
 <template>
+  <!-- <template>部分は変更ありません -->
   <div class="list-section">
     <h2>入力履歴</h2>
-    
-    <!-- ★★★ showContentがtrueの時だけ、中身全体を表示する ★★★ -->
     <div v-if="showContent">
       <div class="summary-box">
         <div class="summary-content">
@@ -88,7 +94,6 @@ function handleEditClick(entry) { /* ... 変更なし ... */ }
           </div>
         </div>
       </div>
-      
       <table v-if="entries.length > 0">
         <thead>
           <tr>
@@ -112,16 +117,31 @@ function handleEditClick(entry) { /* ... 変更なし ... */ }
           </tr>
         </tbody>
       </table>
-      
       <div v-if="entries.length === 0">まだデータがありません。</div>
     </div>
-
-    <!-- 読み込み中とエラーの表示 -->
     <div v-if="isLoading">データを読み込んでいます...</div>
     <div v-if="errorMessage" class="error-box">{{ errorMessage }}</div>
   </div>
 </template>
 
 <style scoped>
-/* スタイル部分は変更なし */
+/* <style>部分は変更ありません */
+.list-section { margin-top: 40px; }
+.error-box { color: red; font-weight: bold; }
+.summary-box { background-color: #f2f2f2; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+.summary-box h3 { margin: 0; font-size: 1.2em; }
+.summary-box span { font-size: 1.5em; color: #42b883; margin-left: 10px; }
+.summary-content { display: flex; align-items: center; gap: 20px; }
+.total-amount-container { flex-grow: 1; }
+.chart-container { width: 200px; height: 200px; }
+table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #f2f2f2; }
+tr:nth-child(even) { background-color: #f9f9f9; }
+.amount { text-align: right; font-weight: bold; }
+.actions { display: flex; gap: 5px; }
+.edit-btn { background-color: #4285F4; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+.edit-btn:hover { background-color: #357ae8; }
+.delete-btn { background-color: #e53935; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+.delete-btn:hover { background-color: #c62828; }
 </style>
